@@ -2,8 +2,8 @@
 #include "lastfm-recent-tracks.h"
 
 static Window *s_window;
-static Layer *track_layer;
-static TextLayer *s_track_layer, *s_artist_layer, *s_timestamp_layer;
+static Layer *track_layer, *header_layer;
+static TextLayer *s_track_layer, *s_artist_layer, *s_timestamp_layer, *s_total_layer;
 
 static char track_data[4096];
 static char artist_data[4096];
@@ -21,10 +21,10 @@ static bool isCurrentLast() {
 
 static void prv_window_update() {
   layer_mark_dirty(track_layer);
+  layer_mark_dirty(header_layer);
 }
 
 static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
-
   char* current_track = track_data;
   char* current_artist = artist_data;
   char* current_timestamp = timestamp_data;
@@ -68,7 +68,7 @@ void prv_load_settings() {
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(s_track_layer, "Select");
+  prv_window_update();
 }
 
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -134,27 +134,43 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
   }
 }
 
+static void header_update_proc(Layer *layer, GContext *ctx) {
+  static char total_buffer[8];
+  snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
+  text_layer_set_text(s_total_layer, total_buffer);
+}
+
 static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
   track_layer = layer_create(bounds);
+  header_layer = layer_create(bounds);
 
-  s_track_layer = text_layer_create(GRect(0, 20, bounds.size.w, 20));
+  s_track_layer = text_layer_create(GRect(0, 40, bounds.size.w, 20));
   text_layer_set_text_alignment(s_track_layer, GTextAlignmentCenter);
   layer_add_child(track_layer, text_layer_get_layer(s_track_layer));
 
-  s_artist_layer = text_layer_create(GRect(0, 40, bounds.size.w, 20));
+  s_artist_layer = text_layer_create(GRect(0, 60, bounds.size.w, 20));
   text_layer_set_text_alignment(s_artist_layer, GTextAlignmentCenter);
   layer_add_child(track_layer, text_layer_get_layer(s_artist_layer));
 
-  s_timestamp_layer = text_layer_create(GRect(0, 60, bounds.size.w, 20));
+  s_timestamp_layer = text_layer_create(GRect(0, 80, bounds.size.w, 20));
   text_layer_set_text_alignment(s_timestamp_layer, GTextAlignmentCenter);
   layer_add_child(track_layer, text_layer_get_layer(s_timestamp_layer));
 
+  s_total_layer = text_layer_create(GRect(0, 20, bounds.size.w, 20));
+  text_layer_set_text_alignment(s_total_layer, GTextAlignmentCenter);
+  layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
+
+  layer_add_child(window_layer, header_layer);
   layer_add_child(window_layer, track_layer);
 
+  text_layer_set_text(s_track_layer, "LOADING");
+
   layer_set_update_proc(track_layer, track_update_proc);
+  layer_set_update_proc(header_layer, header_update_proc);
 
   prv_window_update();
 }
@@ -180,6 +196,7 @@ static void prv_init(void) {
 
 static void prv_deinit(void) {
   layer_destroy(track_layer);
+  layer_destroy(header_layer);
   window_destroy(s_window);
 }
 
