@@ -7,19 +7,21 @@
 #define HEADER_BUFFER_SIZE 8
 
 #define TRACK_POS_X 0
-#define TRACK_POS_Y 40
+#define TRACK_POS_Y 28
 #define TRACK_SIZE_H 32
 
 #define ARTIST_POS_X 0
-#define ARTIST_POS_Y 70
+#define ARTIST_POS_Y 80
 #define ARTIST_SIZE_H 32
 
 #define TIMESTAMP_DATA_SIZE 72
 #define TIMESTAMP_BUFFER_SIZE 24
 #define TIMESTAMP_POS_X 0
-#define TIMESTAMP_POS_Y 98
+#define TIMESTAMP_POS_Y 112
 #define TIMESTAMP_SIZE_H 24
 
 #define TOTAL_POS_X 0
-#define TOTAL_POS_Y 20
-#define TOTAL_SIZE_H 14
+#define TOTAL_POS_Y 8
+#define TOTAL_SIZE_H 18
+
+#define MARGIN_Y 6

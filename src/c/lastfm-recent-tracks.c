@@ -94,6 +94,12 @@ static void prv_click_config_provider(void *context) {
 }
 
 static void track_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
+
+  GSize track_size = GSize(TRACK_SIZE_H, TRACK_SIZE_H);
+  GSize artist_size = GSize(ARTIST_SIZE_H, ARTIST_SIZE_H);
+  GSize timestamp_size = GSize(TIMESTAMP_SIZE_H, TIMESTAMP_SIZE_H);
+
   if (tracks[current]) {
     static char track_buffer[BUFFER_SIZE];
     static unsigned int track_length;
@@ -105,6 +111,17 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     snprintf(track_buffer, sizeof(track_buffer), "%.*s", track_length, tracks[current]);
     APP_LOG(APP_LOG_LEVEL_DEBUG, track_buffer);
     text_layer_set_text(s_track_layer, track_buffer);
+
+    track_size = text_layer_get_content_size(s_track_layer);
+
+    layer_set_frame(text_layer_get_layer(s_track_layer),
+      GRect(
+        TRACK_POS_X,
+        TRACK_POS_Y,
+        bounds.size.w,
+        track_size.h + 4
+      )
+    );
   }
 
   if (artists[current]) {
@@ -118,6 +135,17 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     snprintf(artist_buffer, sizeof(artist_buffer), "%.*s", artist_length, artists[current]);
     APP_LOG(APP_LOG_LEVEL_DEBUG, artist_buffer);
     text_layer_set_text(s_artist_layer, artist_buffer);
+
+    artist_size = text_layer_get_content_size(s_artist_layer);
+
+    layer_set_frame(text_layer_get_layer(s_artist_layer),
+      GRect(
+        ARTIST_POS_X,
+        TRACK_POS_Y + track_size.h + MARGIN_Y,
+        bounds.size.w,
+        artist_size.h + MARGIN_Y
+      )
+    );
   }
 
   if (timestamps[current]) {
@@ -131,6 +159,17 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%.*s", timestamp_length, timestamps[current]);
     APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_buffer);
     text_layer_set_text(s_timestamp_layer, timestamp_buffer);
+
+    timestamp_size = text_layer_get_content_size(s_timestamp_layer);
+
+    layer_set_frame(text_layer_get_layer(s_timestamp_layer),
+      GRect(
+        TIMESTAMP_POS_X,
+        TRACK_POS_Y + track_size.h + MARGIN_Y + artist_size.h + MARGIN_Y,
+        bounds.size.w,
+        timestamp_size.h + MARGIN_Y
+      )
+    );
   }
 }
 
@@ -151,21 +190,27 @@ static void prv_window_load(Window *window) {
   s_track_layer = text_layer_create(GRect(TRACK_POS_X, TRACK_POS_Y, bounds.size.w, TRACK_SIZE_H));
   text_layer_set_text_alignment(s_track_layer, GTextAlignmentCenter);
   text_layer_set_font(s_track_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_overflow_mode(s_track_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_track_layer, GColorClear);
   layer_add_child(track_layer, text_layer_get_layer(s_track_layer));
 
   s_artist_layer = text_layer_create(GRect(ARTIST_POS_X, ARTIST_POS_Y, bounds.size.w, ARTIST_SIZE_H));
   text_layer_set_text_alignment(s_artist_layer, GTextAlignmentCenter);
   text_layer_set_font(s_artist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+  text_layer_set_overflow_mode(s_artist_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_artist_layer, GColorClear);
   layer_add_child(track_layer, text_layer_get_layer(s_artist_layer));
 
   s_timestamp_layer = text_layer_create(GRect(TIMESTAMP_POS_X, TIMESTAMP_POS_Y, bounds.size.w, TIMESTAMP_SIZE_H));
   text_layer_set_text_alignment(s_timestamp_layer, GTextAlignmentCenter);
   text_layer_set_font(s_timestamp_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_background_color(s_timestamp_layer, GColorClear);
   layer_add_child(track_layer, text_layer_get_layer(s_timestamp_layer));
 
   s_total_layer = text_layer_create(GRect(TOTAL_POS_X, TOTAL_POS_Y, bounds.size.w, TOTAL_SIZE_H));
   text_layer_set_text_alignment(s_total_layer, GTextAlignmentCenter);
   text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
   layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
 
   layer_add_child(window_layer, header_layer);
