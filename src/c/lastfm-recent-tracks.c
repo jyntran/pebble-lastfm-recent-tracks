@@ -1,9 +1,14 @@
 #include <pebble.h>
 #include "lastfm-recent-tracks.h"
+#include "settings.h"
 
 static Window *s_window;
 static Layer *track_layer, *header_layer;
-static TextLayer *s_track_layer, *s_artist_layer, *s_timestamp_layer, *s_total_layer;
+static TextLayer  *s_track_layer,
+                  *s_artist_layer,
+                  *s_timestamp_layer,
+                  *s_total_layer,
+                  *s_username_layer;
 
 static char track_data[DATA_SIZE];
 static char artist_data[DATA_SIZE];
@@ -19,12 +24,12 @@ static bool isCurrentLast() {
   return current == LIMIT-1;
 }
 
-static void prv_window_update() {
+void prv_window_update() {
   layer_mark_dirty(track_layer);
   layer_mark_dirty(header_layer);
 }
 
-static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
+void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
   char* current_track = track_data;
   char* current_artist = artist_data;
   char* current_timestamp = timestamp_data;
@@ -59,12 +64,12 @@ static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) 
   APP_LOG(APP_LOG_LEVEL_DEBUG, artist_data);
   APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_data);
 
-  prv_window_update();
-}
+  Tuple *username_tuple = dict_find(iter, MESSAGE_KEY_LastfmUsername);
+  if (username_tuple) {
+    strncpy(settings.LastfmUsername, username_tuple->value->cstring, sizeof(settings.LastfmUsername) - 1);
+  }
 
-void prv_load_settings() {
-  app_message_register_inbox_received(prv_inbox_received_handler);
-  app_message_open(256, 256);
+  prv_window_update();
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -178,6 +183,13 @@ static void header_update_proc(Layer *layer, GContext *ctx) {
   snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
   APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
   text_layer_set_text(s_total_layer, total_buffer);
+
+  if (settings.LastfmUsername && strlen(settings.LastfmUsername) > 0) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "username: %s", settings.LastfmUsername);
+    text_layer_set_text(s_username_layer, settings.LastfmUsername);
+  } else {
+    text_layer_set_text(s_username_layer, "-");
+  }
 }
 
 static void prv_window_load(Window *window) {
@@ -207,11 +219,17 @@ static void prv_window_load(Window *window) {
   text_layer_set_background_color(s_timestamp_layer, GColorClear);
   layer_add_child(track_layer, text_layer_get_layer(s_timestamp_layer));
 
-  s_total_layer = text_layer_create(GRect(TOTAL_POS_X, TOTAL_POS_Y, bounds.size.w, TOTAL_SIZE_H));
-  text_layer_set_text_alignment(s_total_layer, GTextAlignmentCenter);
+  s_total_layer = text_layer_create(GRect(3*bounds.size.w/4, TOTAL_POS_Y, bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
+  text_layer_set_text_alignment(s_total_layer, GTextAlignmentRight);
   text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
   layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
+
+  s_username_layer = text_layer_create(GRect(TOTAL_POS_X + MARGIN_X, TOTAL_POS_Y, 3*bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
+  text_layer_set_text_alignment(s_username_layer, GTextAlignmentLeft);
+  text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_overflow_mode(s_username_layer, GTextOverflowModeWordWrap);
+  layer_add_child(header_layer, text_layer_get_layer(s_username_layer));
 
   layer_add_child(window_layer, header_layer);
   layer_add_child(window_layer, track_layer);
@@ -228,6 +246,8 @@ static void prv_window_unload(Window *window) {
   text_layer_destroy(s_track_layer);
   text_layer_destroy(s_artist_layer);
   text_layer_destroy(s_timestamp_layer);
+  text_layer_destroy(s_total_layer);
+  text_layer_destroy(s_username_layer);
 }
 
 static void prv_init(void) {

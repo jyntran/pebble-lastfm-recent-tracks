@@ -83,7 +83,7 @@ Pebble.addEventListener('showConfiguration', function(e) {
 Pebble.addEventListener('webviewclosed', function(e) {
   var dict = clay.getSettings(e.response);
 
-  lastfmUsername = dict[messageKeys.LastfmUsername];
+  lastfmUsername = dict[messageKeys.LastfmUsername] ? dict[messageKeys.LastfmUsername] : env.lastfm.username;
   console.log('lastfmUsername: ', lastfmUsername);
 
   Pebble.sendAppMessage(dict, function() {

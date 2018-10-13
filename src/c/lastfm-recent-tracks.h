@@ -7,7 +7,7 @@
 #define HEADER_BUFFER_SIZE 8
 
 #define TRACK_POS_X 0
-#define TRACK_POS_Y 28
+#define TRACK_POS_Y 32
 #define TRACK_SIZE_H 32
 
 #define ARTIST_POS_X 0
@@ -24,4 +24,11 @@
 #define TOTAL_POS_Y 8
 #define TOTAL_SIZE_H 18
 
+#define USERNAME_POS_X 0
+#define USERNAME_POS_Y 8
+#define USERNAME_SIZE_H 18
+
+#define MARGIN_X 6
 #define MARGIN_Y 6
+
+void prv_window_update();
