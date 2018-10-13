@@ -2,9 +2,13 @@
   "name": "Last.fm Recent Tracks",
   "author": "jyntran",
   "version": "1.0.0",
-  "keywords": ["pebble-app"],
+  "keywords": [
+    "pebble-app"
+  ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "Last.fm Recent Tracks",
     "uuid": "d53b289b-33ef-409b-ba48-9ebf86aac542",
@@ -21,7 +25,8 @@
     },
     "messageKeys": [
       "Tracks",
-      "Artists"
+      "Artists",
+      "LastfmUsername"
     ],
     "resources": {
       "media": []

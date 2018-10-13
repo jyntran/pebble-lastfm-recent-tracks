@@ -1,0 +1,21 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Last.fm Recent Tracks"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "text",
+        "messageKey": "LastfmUsername",
+        "label": "Last.fm username to retrieve recent tracks",
+        "defaultValue": ""
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
+  }
+]
