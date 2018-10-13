@@ -179,6 +179,11 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void header_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
+  GRect header_bounds = GRect(0, 0, bounds.size.w, HEADER_SIZE_H);
+  graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorDarkCandyAppleRed, GColorBlack));
+  graphics_fill_rect(ctx, header_bounds, 0, 0);
+
   static char total_buffer[HEADER_BUFFER_SIZE];
   snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
   APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
@@ -223,12 +228,16 @@ static void prv_window_load(Window *window) {
   text_layer_set_text_alignment(s_total_layer, GTextAlignmentRight);
   text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_total_layer, GColorClear);
+  text_layer_set_text_color(s_total_layer, GColorWhite);
   layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
 
   s_username_layer = text_layer_create(GRect(TOTAL_POS_X + MARGIN_X, TOTAL_POS_Y, 3*bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
   text_layer_set_text_alignment(s_username_layer, GTextAlignmentLeft);
-  text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_overflow_mode(s_username_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_username_layer, GColorClear);
+  text_layer_set_text_color(s_username_layer, GColorWhite);
   layer_add_child(header_layer, text_layer_get_layer(s_username_layer));
 
   layer_add_child(window_layer, header_layer);

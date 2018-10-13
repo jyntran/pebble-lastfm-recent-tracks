@@ -7,7 +7,7 @@
 #define HEADER_BUFFER_SIZE 8
 
 #define TRACK_POS_X 0
-#define TRACK_POS_Y 32
+#define TRACK_POS_Y 40
 #define TRACK_SIZE_H 32
 
 #define ARTIST_POS_X 0
@@ -20,12 +20,14 @@
 #define TIMESTAMP_POS_Y 112
 #define TIMESTAMP_SIZE_H 24
 
+#define HEADER_SIZE_H 30
+
 #define TOTAL_POS_X 0
-#define TOTAL_POS_Y 8
+#define TOTAL_POS_Y 4
 #define TOTAL_SIZE_H 18
 
 #define USERNAME_POS_X 0
-#define USERNAME_POS_Y 8
+#define USERNAME_POS_Y 4
 #define USERNAME_SIZE_H 18
 
 #define MARGIN_X 6
