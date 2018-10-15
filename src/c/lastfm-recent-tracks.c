@@ -2,8 +2,8 @@
 #include "lastfm-recent-tracks.h"
 #include "settings.h"
 
-static Window *s_window;
-static Layer *track_layer, *header_layer;
+static Window     *s_window;
+static Layer      *header_layer, *body_layer;
 static TextLayer  *s_track_layer,
                   *s_artist_layer,
                   *s_timestamp_layer,
@@ -14,19 +14,20 @@ static char track_data[DATA_SIZE];
 static char artist_data[DATA_SIZE];
 static char timestamp_data[TIMESTAMP_DATA_SIZE];
 
-static int current = 0;
-
 static char* tracks[LIMIT];
 static char* artists[LIMIT];
 static char* timestamps[LIMIT];
+
+static int current = 0;
+
 
 static bool isCurrentLast() {
   return current == LIMIT-1;
 }
 
 void prv_window_update() {
-  layer_mark_dirty(track_layer);
   layer_mark_dirty(header_layer);
+  layer_mark_dirty(body_layer);
 }
 
 void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
@@ -80,7 +81,6 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (current != 0) {
     current--;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "current track index: %d", current);
     prv_window_update();
   }
 }
@@ -88,7 +88,6 @@ static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
 static void prv_down_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (!isCurrentLast()) {
     current++;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "current track index: %d", current);
     prv_window_update();
   }
 }
@@ -99,7 +98,7 @@ static void prv_click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_DOWN, prv_down_click_handler);
 }
 
-static void track_update_proc(Layer *layer, GContext *ctx) {
+static void body_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
 
   GSize track_size = GSize(TRACK_SIZE_H, TRACK_SIZE_H);
@@ -204,36 +203,8 @@ static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  track_layer = layer_create(bounds);
   header_layer = layer_create(bounds);
-
-  s_track_layer = text_layer_create(GRect(TRACK_POS_X, TRACK_POS_Y, bounds.size.w, TRACK_SIZE_H));
-  text_layer_set_text_alignment(s_track_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_track_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_overflow_mode(s_track_layer, GTextOverflowModeWordWrap);
-  text_layer_set_background_color(s_track_layer, GColorClear);
-  layer_add_child(track_layer, text_layer_get_layer(s_track_layer));
-
-  s_artist_layer = text_layer_create(GRect(ARTIST_POS_X, ARTIST_POS_Y, bounds.size.w, ARTIST_SIZE_H));
-  text_layer_set_text_alignment(s_artist_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_artist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_overflow_mode(s_artist_layer, GTextOverflowModeWordWrap);
-  text_layer_set_background_color(s_artist_layer, GColorClear);
-  layer_add_child(track_layer, text_layer_get_layer(s_artist_layer));
-
-  s_timestamp_layer = text_layer_create(GRect(TIMESTAMP_POS_X, TIMESTAMP_POS_Y, bounds.size.w, TIMESTAMP_SIZE_H));
-  text_layer_set_text_alignment(s_timestamp_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_timestamp_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-  text_layer_set_background_color(s_timestamp_layer, GColorClear);
-  layer_add_child(track_layer, text_layer_get_layer(s_timestamp_layer));
-
-  s_total_layer = text_layer_create(GRect(3*bounds.size.w/4, TOTAL_POS_Y, bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
-  text_layer_set_text_alignment(s_total_layer, GTextAlignmentRight);
-  text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
-  text_layer_set_background_color(s_total_layer, GColorClear);
-  text_layer_set_text_color(s_total_layer, GColorWhite);
-  layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
+  body_layer = layer_create(bounds);
 
   s_username_layer = text_layer_create(GRect(TOTAL_POS_X + MARGIN_X, TOTAL_POS_Y, 3*bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
   text_layer_set_text_alignment(s_username_layer, GTextAlignmentLeft);
@@ -243,23 +214,50 @@ static void prv_window_load(Window *window) {
   text_layer_set_text_color(s_username_layer, GColorWhite);
   layer_add_child(header_layer, text_layer_get_layer(s_username_layer));
 
-  layer_add_child(window_layer, header_layer);
-  layer_add_child(window_layer, track_layer);
+  s_total_layer = text_layer_create(GRect(3*bounds.size.w/4, TOTAL_POS_Y, bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
+  text_layer_set_text_alignment(s_total_layer, GTextAlignmentRight);
+  text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_total_layer, GColorClear);
+  text_layer_set_text_color(s_total_layer, GColorWhite);
+  layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
 
+  s_track_layer = text_layer_create(GRect(TRACK_POS_X, TRACK_POS_Y, bounds.size.w, TRACK_SIZE_H));
+  text_layer_set_text_alignment(s_track_layer, GTextAlignmentCenter);
+  text_layer_set_font(s_track_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_overflow_mode(s_track_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_track_layer, GColorClear);
+  layer_add_child(body_layer, text_layer_get_layer(s_track_layer));
   text_layer_set_text(s_track_layer, "Loading");
 
-  layer_set_update_proc(track_layer, track_update_proc);
+  s_artist_layer = text_layer_create(GRect(ARTIST_POS_X, ARTIST_POS_Y, bounds.size.w, ARTIST_SIZE_H));
+  text_layer_set_text_alignment(s_artist_layer, GTextAlignmentCenter);
+  text_layer_set_font(s_artist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+  text_layer_set_overflow_mode(s_artist_layer, GTextOverflowModeWordWrap);
+  text_layer_set_background_color(s_artist_layer, GColorClear);
+  layer_add_child(body_layer, text_layer_get_layer(s_artist_layer));
+
+  s_timestamp_layer = text_layer_create(GRect(TIMESTAMP_POS_X, TIMESTAMP_POS_Y, bounds.size.w, TIMESTAMP_SIZE_H));
+  text_layer_set_text_alignment(s_timestamp_layer, GTextAlignmentCenter);
+  text_layer_set_font(s_timestamp_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_background_color(s_timestamp_layer, GColorClear);
+  layer_add_child(body_layer, text_layer_get_layer(s_timestamp_layer));
+
+  layer_add_child(window_layer, header_layer);
+  layer_add_child(window_layer, body_layer);
+
   layer_set_update_proc(header_layer, header_update_proc);
+  layer_set_update_proc(body_layer, body_update_proc);
 
   prv_window_update();
 }
 
 static void prv_window_unload(Window *window) {
+  text_layer_destroy(s_username_layer);
+  text_layer_destroy(s_total_layer);
   text_layer_destroy(s_track_layer);
   text_layer_destroy(s_artist_layer);
   text_layer_destroy(s_timestamp_layer);
-  text_layer_destroy(s_total_layer);
-  text_layer_destroy(s_username_layer);
 }
 
 static void prv_init(void) {
@@ -276,8 +274,8 @@ static void prv_init(void) {
 }
 
 static void prv_deinit(void) {
-  layer_destroy(track_layer);
   layer_destroy(header_layer);
+  layer_destroy(body_layer);
   window_destroy(s_window);
 }
 

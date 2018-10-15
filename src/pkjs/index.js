@@ -4,9 +4,9 @@ var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
 var messageKeys = require('message_keys');
 var env = require('./env.json');
 
-var xhrRequest = function (url, type, callback) {
+var xhrRequest = function(url, type, callback) {
   var xhr = new XMLHttpRequest();
-  xhr.onload = function () {
+  xhr.onload = function() {
     callback(this.responseText);
   };
   xhr.open(type, url);
@@ -39,7 +39,6 @@ function getLastfmTracks(username, apiKey) {
         });
 
         dictionary[messageKeys.LastfmUsername] = username;
-
         console.log('dictionary', JSON.stringify(dictionary));
 
         Pebble.sendAppMessage(dictionary,
