@@ -7,7 +7,7 @@
     "type": "section",
     "items": [
       {
-        "type": "text",
+        "type": "input",
         "messageKey": "LastfmUsername",
         "label": "Last.fm username to retrieve recent tracks",
         "defaultValue": ""

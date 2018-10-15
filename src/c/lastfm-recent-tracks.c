@@ -67,6 +67,7 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *username_tuple = dict_find(iter, MESSAGE_KEY_LastfmUsername);
   if (username_tuple) {
     strncpy(settings.LastfmUsername, username_tuple->value->cstring, sizeof(settings.LastfmUsername) - 1);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, settings.LastfmUsername);
   }
 
   prv_window_update();
@@ -118,13 +119,12 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     text_layer_set_text(s_track_layer, track_buffer);
 
     track_size = text_layer_get_content_size(s_track_layer);
-
     layer_set_frame(text_layer_get_layer(s_track_layer),
       GRect(
-        TRACK_POS_X,
+        TRACK_POS_X + MARGIN_X,
         TRACK_POS_Y,
-        bounds.size.w,
-        track_size.h + 4
+        bounds.size.w - MARGIN_X,
+        track_size.h + MARGIN_Y
       )
     );
   }
@@ -142,12 +142,11 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     text_layer_set_text(s_artist_layer, artist_buffer);
 
     artist_size = text_layer_get_content_size(s_artist_layer);
-
     layer_set_frame(text_layer_get_layer(s_artist_layer),
       GRect(
-        ARTIST_POS_X,
+        ARTIST_POS_X + MARGIN_X,
         TRACK_POS_Y + track_size.h + MARGIN_Y,
-        bounds.size.w,
+        bounds.size.w - MARGIN_X,
         artist_size.h + MARGIN_Y
       )
     );
@@ -166,12 +165,11 @@ static void track_update_proc(Layer *layer, GContext *ctx) {
     text_layer_set_text(s_timestamp_layer, timestamp_buffer);
 
     timestamp_size = text_layer_get_content_size(s_timestamp_layer);
-
     layer_set_frame(text_layer_get_layer(s_timestamp_layer),
       GRect(
-        TIMESTAMP_POS_X,
+        TIMESTAMP_POS_X + MARGIN_X,
         TRACK_POS_Y + track_size.h + MARGIN_Y + artist_size.h + MARGIN_Y,
-        bounds.size.w,
+        bounds.size.w - MARGIN_X,
         timestamp_size.h + MARGIN_Y
       )
     );
@@ -184,16 +182,21 @@ static void header_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorDarkCandyAppleRed, GColorBlack));
   graphics_fill_rect(ctx, header_bounds, 0, 0);
 
-  static char total_buffer[HEADER_BUFFER_SIZE];
-  snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
-  text_layer_set_text(s_total_layer, total_buffer);
+  bool hasUsername = settings.LastfmUsername && strlen(settings.LastfmUsername) > 0;
 
-  if (settings.LastfmUsername && strlen(settings.LastfmUsername) > 0) {
+  if (hasUsername) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "username: %s", settings.LastfmUsername);
     text_layer_set_text(s_username_layer, settings.LastfmUsername);
+    layer_set_hidden(text_layer_get_layer(s_username_layer), !hasUsername);
+
+    static char total_buffer[HEADER_BUFFER_SIZE];
+    snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
+    text_layer_set_text(s_total_layer, total_buffer);
+    layer_set_hidden(text_layer_get_layer(s_total_layer), !hasUsername);
   } else {
-    text_layer_set_text(s_username_layer, "-");
+    layer_set_hidden(text_layer_get_layer(s_username_layer), hasUsername);
+    layer_set_hidden(text_layer_get_layer(s_total_layer), hasUsername);
   }
 }
 
@@ -234,7 +237,7 @@ static void prv_window_load(Window *window) {
 
   s_username_layer = text_layer_create(GRect(TOTAL_POS_X + MARGIN_X, TOTAL_POS_Y, 3*bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
   text_layer_set_text_alignment(s_username_layer, GTextAlignmentLeft);
-  text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_overflow_mode(s_username_layer, GTextOverflowModeWordWrap);
   text_layer_set_background_color(s_username_layer, GColorClear);
   text_layer_set_text_color(s_username_layer, GColorWhite);

@@ -24,8 +24,6 @@
       "watchface": false
     },
     "messageKeys": [
-      "Tracks",
-      "Artists",
       "LastfmUsername"
     ],
     "resources": {
