@@ -9,7 +9,14 @@
       {
         "type": "input",
         "messageKey": "LastfmUsername",
-        "label": "Last.fm username to retrieve recent tracks",
+        "label": "Last.fm Username",
+        "defaultValue": ""
+      },
+      {
+        "type": "input",
+        "messageKey": "LastfmAPIKey",
+        "label": "Last.fm API key (optional)",
+        "description": "If you don't know what this is, don't worry about it.",
         "defaultValue": ""
       }
     ]

@@ -2,7 +2,6 @@ var Clay = require('pebble-clay');
 var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
 var messageKeys = require('message_keys');
-
 var env = require('./env.json');
 
 var xhrRequest = function (url, type, callback) {
@@ -14,9 +13,8 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-function getLastfmTracks(lastfmUsername) {
-  var username = lastfmUsername !== '' ? lastfmUsername : env.lastfm.username;
-  var apiKey = env.lastfm.apiKey;
+function getLastfmTracks(username, apiKey) {
+  var apiKey = apiKey ? apiKey : env.lastfm.apiKey;
   var limit = 3;
   var url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
     + '&user=' + username + '&api_key=' + apiKey
@@ -40,7 +38,7 @@ function getLastfmTracks(lastfmUsername) {
           dictionary[i + '02'] = track.date ? track.date['#text'] : 'Now Playing';
         });
 
-        dictionary[messageKeys.LastfmUsername] = lastfmUsername;
+        dictionary[messageKeys.LastfmUsername] = username;
 
         console.log('dictionary', JSON.stringify(dictionary));
 
@@ -68,8 +66,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   }
 
   var dict = clay.getSettings(e.response);
-  if (dict && dict[messageKeys.LastfmUsername]) {
-    getLastfmTracks(dict[messageKeys.LastfmUsername]);
+  if (dict) {
+    getLastfmTracks(dict[messageKeys.LastfmUsername], dict[messageKeys.LastfmAPIKey]);
   }
 });
 
@@ -77,7 +75,7 @@ Pebble.addEventListener('ready', function(e) {
   console.log('PebbleKit JS ready!');
 
   var claySettings = JSON.parse(localStorage.getItem('clay-settings'));
-  if (claySettings && claySettings.LastfmUsername) {
-    getLastfmTracks(claySettings.LastfmUsername);
+  if (claySettings) {
+    getLastfmTracks(claySettings.LastfmUsername, claySettings.LastfmAPIKey);
   }
 });

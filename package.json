@@ -24,6 +24,7 @@
       "watchface": false
     },
     "messageKeys": [
+      "LastfmAPIKey",
       "LastfmUsername"
     ],
     "resources": {
