@@ -100,6 +100,12 @@ static void prv_click_config_provider(void *context) {
 
 static void body_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
+  GRect body_bounds =
+    PBL_IF_ROUND_ELSE(
+      grect_inset(GRect(bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h), GEdgeInsets(CHALK_MARGIN_Y, CHALK_MARGIN_X))
+      ,
+      GRect(bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h-HEADER_SIZE_H)
+    );
 
   GSize track_size = GSize(TRACK_SIZE_H, TRACK_SIZE_H);
   GSize artist_size = GSize(ARTIST_SIZE_H, ARTIST_SIZE_H);
@@ -120,9 +126,9 @@ static void body_update_proc(Layer *layer, GContext *ctx) {
     track_size = text_layer_get_content_size(s_track_layer);
     layer_set_frame(text_layer_get_layer(s_track_layer),
       GRect(
-        TRACK_POS_X + MARGIN_X,
+        TRACK_POS_X,
         TRACK_POS_Y,
-        bounds.size.w - MARGIN_X,
+        body_bounds.size.w,
         track_size.h + MARGIN_Y
       )
     );
@@ -143,9 +149,9 @@ static void body_update_proc(Layer *layer, GContext *ctx) {
     artist_size = text_layer_get_content_size(s_artist_layer);
     layer_set_frame(text_layer_get_layer(s_artist_layer),
       GRect(
-        ARTIST_POS_X + MARGIN_X,
+        ARTIST_POS_X,
         TRACK_POS_Y + track_size.h + MARGIN_Y,
-        bounds.size.w - MARGIN_X,
+        body_bounds.size.w,
         artist_size.h + MARGIN_Y
       )
     );
@@ -166,9 +172,9 @@ static void body_update_proc(Layer *layer, GContext *ctx) {
     timestamp_size = text_layer_get_content_size(s_timestamp_layer);
     layer_set_frame(text_layer_get_layer(s_timestamp_layer),
       GRect(
-        TIMESTAMP_POS_X + MARGIN_X,
+        TIMESTAMP_POS_X,
         TRACK_POS_Y + track_size.h + MARGIN_Y + artist_size.h + MARGIN_Y,
-        bounds.size.w - MARGIN_X,
+        body_bounds.size.w,
         timestamp_size.h + MARGIN_Y
       )
     );
@@ -177,7 +183,7 @@ static void body_update_proc(Layer *layer, GContext *ctx) {
 
 static void header_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
-  GRect header_bounds = GRect(0, 0, bounds.size.w, HEADER_SIZE_H);
+  GRect header_bounds = GRect(0, 0, bounds.size.w, PBL_IF_ROUND_ELSE(CHALK_HEADER_SIZE_H, HEADER_SIZE_H));
   graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorDarkCandyAppleRed, GColorBlack));
   graphics_fill_rect(ctx, header_bounds, 0, 0);
 
@@ -203,43 +209,49 @@ static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  header_layer = layer_create(bounds);
-  body_layer = layer_create(bounds);
+  GRect header_bounds = GRect(bounds.origin.x, bounds.origin.y, bounds.size.w, PBL_IF_ROUND_ELSE(CHALK_HEADER_SIZE_H, HEADER_SIZE_H));
+  header_layer = layer_create(header_bounds);
+  
+#if defined(PBL_ROUND)
+  GEdgeInsets body_insets = GEdgeInsets(CHALK_MARGIN_Y, CHALK_MARGIN_X);
+  GRect body_bounds = grect_inset(GRect(bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h), body_insets);
+#else
+  GRect body_bounds = GRect(bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h-HEADER_SIZE_H);
+#endif
+  body_layer = layer_create(body_bounds);
 
-  s_username_layer = text_layer_create(GRect(TOTAL_POS_X + MARGIN_X, TOTAL_POS_Y, 3*bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
-  text_layer_set_text_alignment(s_username_layer, GTextAlignmentLeft);
+  s_username_layer = text_layer_create(GRect(PBL_IF_ROUND_ELSE(TOTAL_POS_X, TOTAL_POS_X + MARGIN_X), PBL_IF_ROUND_ELSE(CHALK_TOTAL_POS_Y, TOTAL_POS_Y), PBL_IF_ROUND_ELSE(bounds.size.w, 3*bounds.size.w/4 - MARGIN_X), TOTAL_SIZE_H));
+  text_layer_set_text_alignment(s_username_layer, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft));
   text_layer_set_font(s_username_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_overflow_mode(s_username_layer, GTextOverflowModeWordWrap);
   text_layer_set_background_color(s_username_layer, GColorClear);
   text_layer_set_text_color(s_username_layer, GColorWhite);
   layer_add_child(header_layer, text_layer_get_layer(s_username_layer));
 
-  s_total_layer = text_layer_create(GRect(3*bounds.size.w/4, TOTAL_POS_Y, bounds.size.w/4 - MARGIN_X, TOTAL_SIZE_H));
-  text_layer_set_text_alignment(s_total_layer, GTextAlignmentRight);
+  s_total_layer = text_layer_create(GRect(PBL_IF_ROUND_ELSE(bounds.origin.x, 3*bounds.size.w/4), TOTAL_POS_Y, PBL_IF_ROUND_ELSE(bounds.size.w, bounds.size.w/4 - MARGIN_X), TOTAL_SIZE_H));
+  text_layer_set_text_alignment(s_total_layer, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentRight));
   text_layer_set_font(s_total_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_overflow_mode(s_total_layer, GTextOverflowModeWordWrap);
   text_layer_set_background_color(s_total_layer, GColorClear);
   text_layer_set_text_color(s_total_layer, GColorWhite);
   layer_add_child(header_layer, text_layer_get_layer(s_total_layer));
 
-  s_track_layer = text_layer_create(GRect(TRACK_POS_X, TRACK_POS_Y, bounds.size.w, TRACK_SIZE_H));
+  s_track_layer = text_layer_create(GRect(TRACK_POS_X, TRACK_POS_Y, body_bounds.size.w, TRACK_SIZE_H));
   text_layer_set_text_alignment(s_track_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_track_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_font(s_track_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_overflow_mode(s_track_layer, GTextOverflowModeWordWrap);
   text_layer_set_background_color(s_track_layer, GColorClear);
   layer_add_child(body_layer, text_layer_get_layer(s_track_layer));
   text_layer_set_text(s_track_layer, "Loading");
 
-  s_artist_layer = text_layer_create(GRect(ARTIST_POS_X, ARTIST_POS_Y, bounds.size.w, ARTIST_SIZE_H));
+  s_artist_layer = text_layer_create(GRect(ARTIST_POS_X, ARTIST_POS_Y, body_bounds.size.w, ARTIST_SIZE_H));
   text_layer_set_text_alignment(s_artist_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_artist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+  text_layer_set_font(s_artist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_overflow_mode(s_artist_layer, GTextOverflowModeWordWrap);
   text_layer_set_background_color(s_artist_layer, GColorClear);
   layer_add_child(body_layer, text_layer_get_layer(s_artist_layer));
 
-  s_timestamp_layer = text_layer_create(GRect(TIMESTAMP_POS_X, TIMESTAMP_POS_Y, bounds.size.w, TIMESTAMP_SIZE_H));
+  s_timestamp_layer = text_layer_create(GRect(TIMESTAMP_POS_X, TIMESTAMP_POS_Y, body_bounds.size.w, TIMESTAMP_SIZE_H));
   text_layer_set_text_alignment(s_timestamp_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_timestamp_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_font(s_timestamp_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
   text_layer_set_background_color(s_timestamp_layer, GColorClear);
   layer_add_child(body_layer, text_layer_get_layer(s_timestamp_layer));
 

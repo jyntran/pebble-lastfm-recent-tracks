@@ -22,9 +22,13 @@
 
 #define HEADER_SIZE_H 30
 
+#define CHALK_HEADER_SIZE_H 48
+
 #define TOTAL_POS_X 0
 #define TOTAL_POS_Y 4
 #define TOTAL_SIZE_H 18
+
+#define CHALK_TOTAL_POS_Y 24
 
 #define USERNAME_POS_X 0
 #define USERNAME_POS_Y 4
@@ -32,5 +36,8 @@
 
 #define MARGIN_X 6
 #define MARGIN_Y 6
+
+#define CHALK_MARGIN_X 18
+#define CHALK_MARGIN_Y 18
 
 void prv_window_update();
