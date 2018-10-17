@@ -2,7 +2,6 @@ var Clay = require('pebble-clay');
 var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
 var messageKeys = require('message_keys');
-var env = require('./env.json');
 
 var xhrRequest = function(url, type, callback) {
   var xhr = new XMLHttpRequest();
@@ -14,7 +13,6 @@ var xhrRequest = function(url, type, callback) {
 };
 
 function getLastfmTracks(username, apiKey) {
-  var apiKey = apiKey ? apiKey : env.lastfm.apiKey;
   var limit = 3;
   var url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
     + '&user=' + username + '&api_key=' + apiKey
