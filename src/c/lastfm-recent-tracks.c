@@ -25,51 +25,75 @@ static bool isCurrentLast() {
   return current == LIMIT-1;
 }
 
+static bool isEmpty(char arr[]) {
+  return strlen(arr) == 0;
+}
+
 void prv_window_update() {
   layer_mark_dirty(header_layer);
   layer_mark_dirty(body_layer);
 }
 
 void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
+  Tuple *username_tuple = dict_find(iter, MESSAGE_KEY_LastfmUsername);
+  if (username_tuple) {
+    strncpy(settings.LastfmUsername, username_tuple->value->cstring, sizeof(settings.LastfmUsername) - 1);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "username: %s", settings.LastfmUsername);
+  }
+
+  Tuple *show_username_tuple = dict_find(iter, MESSAGE_KEY_ShowUsername);
+  if (show_username_tuple) {
+    settings.ShowUsername = show_username_tuple->value->int32 == 1;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "showUsername: %s", settings.ShowUsername ? "t" : "f");
+  }
+
+  Tuple *show_timestamp_tuple = dict_find(iter, MESSAGE_KEY_ShowTimestamp);
+  if (show_timestamp_tuple) {
+    settings.ShowTimestamp = show_timestamp_tuple->value->int32 == 1;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "showTimestamp: %s", settings.ShowTimestamp ? "t" : "f");
+  }
+
+  Tuple *show_track_total_tuple = dict_find(iter, MESSAGE_KEY_ShowTrackTotal);
+  if (show_track_total_tuple) {
+    settings.ShowTrackTotal = show_track_total_tuple->value->int32 == 1;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "showTrackTotal: %s", settings.ShowTrackTotal ? "t" : "f");
+  }
+
   char* current_track = track_data;
   char* current_artist = artist_data;
   char* current_timestamp = timestamp_data;
 
-  for (int i=0; i<LIMIT; i++) {
-    Tuple *track_tuple = dict_find(iter, 100 * i);
-    if (track_tuple) {
-      tracks[i] = current_track;
-      strcat(track_data, track_tuple->value->cstring);
-      current_track = &track_data[strlen(track_data)];
-      APP_LOG(APP_LOG_LEVEL_DEBUG, tracks[i]);
-    }
+  if (isEmpty(track_data) && isEmpty(artist_data) && isEmpty(timestamp_data)) {
+    for (int i=0; i<LIMIT; i++) {
+      Tuple *track_tuple = dict_find(iter, 100 * i);
+      if (track_tuple) {
+        tracks[i] = current_track;
+        strcat(track_data, track_tuple->value->cstring);
+        current_track = &track_data[strlen(track_data)];
+        APP_LOG(APP_LOG_LEVEL_DEBUG, tracks[i]);
+      }
 
-    Tuple *artist_tuple = dict_find(iter, 100 * i + 1);
-    if (artist_tuple) {
-      artists[i] = current_artist;
-      strcat(artist_data, artist_tuple->value->cstring);
-      current_artist = &artist_data[strlen(artist_data)];
-      APP_LOG(APP_LOG_LEVEL_DEBUG, artists[i]);
-    }
+      Tuple *artist_tuple = dict_find(iter, 100 * i + 1);
+      if (artist_tuple) {
+        artists[i] = current_artist;
+        strcat(artist_data, artist_tuple->value->cstring);
+        current_artist = &artist_data[strlen(artist_data)];
+        APP_LOG(APP_LOG_LEVEL_DEBUG, artists[i]);
+      }
 
-    Tuple *timestamp_tuple = dict_find(iter, 100 * i + 2);
-    if (timestamp_tuple) {
-      timestamps[i] = current_timestamp;
-      strcat(timestamp_data, timestamp_tuple->value->cstring);
-      current_timestamp = &timestamp_data[strlen(timestamp_data)];
-      APP_LOG(APP_LOG_LEVEL_DEBUG, timestamps[i]);
+      Tuple *timestamp_tuple = dict_find(iter, 100 * i + 2);
+      if (timestamp_tuple) {
+        timestamps[i] = current_timestamp;
+        strcat(timestamp_data, timestamp_tuple->value->cstring);
+        current_timestamp = &timestamp_data[strlen(timestamp_data)];
+        APP_LOG(APP_LOG_LEVEL_DEBUG, timestamps[i]);
+      }
     }
   }
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, track_data);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, artist_data);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_data);
-
-  Tuple *username_tuple = dict_find(iter, MESSAGE_KEY_LastfmUsername);
-  if (username_tuple) {
-    strncpy(settings.LastfmUsername, username_tuple->value->cstring, sizeof(settings.LastfmUsername) - 1);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, settings.LastfmUsername);
-  }
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, track_data);
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, artist_data);
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_data);
 
   prv_window_update();
 }
@@ -158,27 +182,32 @@ static void body_update_proc(Layer *layer, GContext *ctx) {
     );
   }
 
-  if (timestamps[current]) {
-    static char timestamp_buffer[TIMESTAMP_BUFFER_SIZE];
-    static unsigned int timestamp_length;
-    if (!isCurrentLast()) {
-      timestamp_length = strlen(timestamps[current]) - strlen(timestamps[current+1]);
-    } else {
-      timestamp_length = strlen(timestamps[current]);
-    }
-    snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%.*s", timestamp_length, timestamps[current]);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_buffer);
-    text_layer_set_text(s_timestamp_layer, timestamp_buffer);
+  if (!settings.ShowTimestamp) {
+    layer_set_hidden(text_layer_get_layer(s_timestamp_layer), true);
+  } else {
+    layer_set_hidden(text_layer_get_layer(s_timestamp_layer), false);
+    if (timestamps[current]) {
+      static char timestamp_buffer[TIMESTAMP_BUFFER_SIZE];
+      static unsigned int timestamp_length;
+      if (!isCurrentLast()) {
+        timestamp_length = strlen(timestamps[current]) - strlen(timestamps[current+1]);
+      } else {
+        timestamp_length = strlen(timestamps[current]);
+      }
+      snprintf(timestamp_buffer, sizeof(timestamp_buffer), "%.*s", timestamp_length, timestamps[current]);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, timestamp_buffer);
+      text_layer_set_text(s_timestamp_layer, timestamp_buffer);
 
-    timestamp_size = text_layer_get_content_size(s_timestamp_layer);
-    layer_set_frame(text_layer_get_layer(s_timestamp_layer),
-      GRect(
-        TIMESTAMP_POS_X,
-        TRACK_POS_Y + track_size.h + MARGIN_Y + artist_size.h + MARGIN_Y,
-        body_bounds.size.w,
-        timestamp_size.h + MARGIN_Y
-      )
-    );
+      timestamp_size = text_layer_get_content_size(s_timestamp_layer);
+      layer_set_frame(text_layer_get_layer(s_timestamp_layer),
+        GRect(
+          TIMESTAMP_POS_X,
+          TRACK_POS_Y + track_size.h + MARGIN_Y + artist_size.h + MARGIN_Y,
+          body_bounds.size.w,
+          timestamp_size.h + MARGIN_Y
+        )
+      );
+    }
   }
 }
 
@@ -191,18 +220,20 @@ static void header_update_proc(Layer *layer, GContext *ctx) {
   bool hasUsername = settings.LastfmUsername && strlen(settings.LastfmUsername) > 0;
 
   if (hasUsername) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "username: %s", settings.LastfmUsername);
     text_layer_set_text(s_username_layer, settings.LastfmUsername);
-    layer_set_hidden(text_layer_get_layer(s_username_layer), !hasUsername);
+    layer_set_hidden(text_layer_get_layer(s_username_layer), !settings.ShowUsername);
+  } else {
+    layer_set_hidden(text_layer_get_layer(s_username_layer), settings.ShowUsername);
+  }
 
+  if (!settings.ShowTrackTotal) {
+    layer_set_hidden(text_layer_get_layer(s_total_layer), true);
+  } else {
+    layer_set_hidden(text_layer_get_layer(s_total_layer), false);
     static char total_buffer[HEADER_BUFFER_SIZE];
     snprintf(total_buffer, sizeof(total_buffer), "%d/%d", current+1, LIMIT);
     APP_LOG(APP_LOG_LEVEL_DEBUG, total_buffer);
     text_layer_set_text(s_total_layer, total_buffer);
-    layer_set_hidden(text_layer_get_layer(s_total_layer), !hasUsername);
-  } else {
-    layer_set_hidden(text_layer_get_layer(s_username_layer), hasUsername);
-    layer_set_hidden(text_layer_get_layer(s_total_layer), hasUsername);
   }
 }
 

@@ -9,7 +9,7 @@
       {
         "type": "input",
         "messageKey": "LastfmUsername",
-        "label": "Last.fm Username",
+        "label": "Last.fm username",
         "defaultValue": ""
       },
       {
@@ -18,6 +18,29 @@
         "label": "Last.fm API key (optional)",
         "description": "If you don't know what this is, don't worry about it.",
         "defaultValue": ""
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "toggle",
+        "messageKey": "ShowUsername",
+        "label": "Show Last.fm username",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowTimestamp",
+        "label": "Show timestamp of scrobble",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowTrackTotal",
+        "label": "Show current track number and track total",
+        "defaultValue": true
       }
     ]
   },

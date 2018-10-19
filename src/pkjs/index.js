@@ -12,7 +12,13 @@ var xhrRequest = function(url, type, callback) {
   xhr.send();
 };
 
-function getLastfmTracks(username, apiKey) {
+function getLastfmTracks(claySettings) {
+  var apiKey = claySettings.LastfmAPIKey;
+  var username = claySettings.LastfmUsername;
+  var showUsername = claySettings.ShowUsername;
+  var showTimestamp = claySettings.ShowTimestamp;
+  var showTrackTotal = claySettings.ShowTrackTotal;
+
   var limit = 3;
   var url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
     + '&user=' + username + '&api_key=' + apiKey
@@ -23,7 +29,7 @@ function getLastfmTracks(username, apiKey) {
     function(responseText) {
       var json = JSON.parse(responseText);
 
-      var dictionary = {};
+      var dict = {};
       // 0 : track name
       // 1 : artist
       // 2 : timestamp
@@ -31,15 +37,17 @@ function getLastfmTracks(username, apiKey) {
       if (json.recenttracks) {
         var tracks = json.recenttracks.track;
         json.recenttracks.track.forEach(function(track, i) {
-          dictionary[i + '00'] = track.name;
-          dictionary[i + '01'] = track.artist['#text'];
-          dictionary[i + '02'] = track.date ? track.date['#text'] : 'Now Playing';
+          dict[i + '00'] = track.name;
+          dict[i + '01'] = track.artist['#text'];
+          dict[i + '02'] = track.date ? track.date['#text'] : 'Now Playing';
         });
 
-        dictionary[messageKeys.LastfmUsername] = username;
-        console.log('dictionary', JSON.stringify(dictionary));
+        dict[messageKeys.LastfmUsername] = username;
+        dict[messageKeys.ShowUsername] = showUsername;
+        dict[messageKeys.ShowTimestamp] = showTimestamp;
+        dict[messageKeys.ShowTrackTotal] = showTrackTotal;
 
-        Pebble.sendAppMessage(dictionary,
+        Pebble.sendAppMessage(dict,
           function(success) {
             console.log('Last.fm track info sent to Pebble successfully!');
           },
@@ -64,7 +72,14 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   var dict = clay.getSettings(e.response);
   if (dict) {
-    getLastfmTracks(dict[messageKeys.LastfmUsername], dict[messageKeys.LastfmAPIKey]);
+    var claySettings = {
+      LastfmAPIKey: dict[messageKeys.LastfmAPIKey],
+      LastfmUsername: dict[messageKeys.LastfmUsername],
+      ShowUsername: dict[messageKeys.ShowUsername],
+      ShowTimestamp: dict[messageKeys.ShowTimestamp],
+      ShowTrackTotal: dict[messageKeys.ShowTrackTotal]
+    };
+    getLastfmTracks(claySettings);
   }
 });
 
@@ -73,6 +88,6 @@ Pebble.addEventListener('ready', function(e) {
 
   var claySettings = JSON.parse(localStorage.getItem('clay-settings'));
   if (claySettings) {
-    getLastfmTracks(claySettings.LastfmUsername, claySettings.LastfmAPIKey);
+    getLastfmTracks(claySettings);
   }
 });

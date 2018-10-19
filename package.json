@@ -25,7 +25,10 @@
     },
     "messageKeys": [
       "LastfmAPIKey",
-      "LastfmUsername"
+      "LastfmUsername",
+      "ShowUsername",
+      "ShowTimestamp",
+      "ShowTrackTotal"
     ],
     "resources": {
       "media": []
